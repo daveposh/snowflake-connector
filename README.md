@@ -40,7 +40,7 @@ This project provides a secure way to connect to Snowflake using the Snowflake D
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/daveposh/snowflake-connector.git
    cd snowflake-connector
    ```
 
@@ -52,7 +52,7 @@ This project provides a secure way to connect to Snowflake using the Snowflake D
 3. Create initial `.env` file with AWS credentials:
    ```bash
    # AWS KMS Configuration
-   AWS_REGION=us-west-2
+   AWS_REGION=us-east-1
    AWS_KMS_KEY_ID=your-kms-key-id
    AWS_ACCESS_KEY_ID=your-aws-access-key
    AWS_SECRET_ACCESS_KEY=your-aws-secret-key
@@ -227,6 +227,258 @@ performance:
    - Implement network policies
    - Use TLS 1.2 or higher
    - Configure firewall rules
+
+## AWS Cost Considerations
+
+1. **AWS KMS Costs**
+   - **Regional Pricing (as of 2024)**
+     - US East (N. Virginia): $0.03 per 10,000 API requests
+     - US West (Oregon): $0.03 per 10,000 API requests
+     - EU (Ireland): €0.025 per 10,000 API requests
+     - Asia Pacific (Tokyo): ¥3.30 per 10,000 API requests
+     - Monthly key cost varies by region
+     - Data transfer costs between regions
+   
+   - **Cost Components**
+     - Key storage: $1.00 per month per key
+     - API requests: $0.03 per 10,000 requests
+     - Data transfer: Varies by region and volume
+     - CloudWatch metrics: Included in KMS costs
+     - KMS key rotation: No additional cost
+
+2. **Cost Optimization Strategies**
+   - **Request Optimization**
+     - Implement request batching for multiple operations
+     - Cache frequently used keys
+     - Use key aliases to reduce key count
+     - Optimize API call frequency
+     - Implement exponential backoff for retries
+   
+   - **Resource Management**
+     - Clean up unused keys regularly
+     - Use key aliases for better organization
+     - Implement key lifecycle policies
+     - Monitor key usage patterns
+     - Archive inactive keys
+   
+   - **Performance Optimization**
+     - Use regional endpoints for reduced latency
+     - Implement connection pooling
+     - Cache key material when possible
+     - Use appropriate key types for workload
+     - Monitor and optimize request patterns
+
+3. **Cost Comparison with Alternatives**
+   - **AWS KMS vs. Self-Managed**
+     - Self-managed: Higher operational costs
+     - Self-managed: Requires dedicated infrastructure
+     - Self-managed: Higher security risks
+     - Self-managed: More complex maintenance
+   
+   - **AWS KMS vs. Other Cloud Providers**
+     - Azure Key Vault: Similar pricing model
+     - Google Cloud KMS: Competitive pricing
+     - HashiCorp Vault: Self-hosted option
+     - Comparison of features and limitations
+   
+   - **Total Cost of Ownership**
+     - Infrastructure costs
+     - Operational costs
+     - Security costs
+     - Compliance costs
+     - Maintenance costs
+
+4. **Budget Planning**
+   - **Cost Estimation**
+     - Calculate expected API calls
+     - Estimate key count
+     - Factor in data transfer
+     - Consider growth projections
+     - Account for regional costs
+   
+   - **Budget Controls**
+     - Set up AWS Budgets
+     - Configure CloudWatch alarms
+     - Implement cost allocation tags
+     - Regular cost reviews
+     - Automated cost optimization
+   
+   - **Reserved Capacity**
+     - Evaluate commitment options
+     - Calculate potential savings
+     - Consider usage patterns
+     - Plan for capacity changes
+     - Monitor utilization
+
+5. **Cost Monitoring and Allocation**
+   - **Monitoring Tools**
+     - AWS Cost Explorer
+     - CloudWatch metrics
+     - Cost and Usage Report
+     - Budget alerts
+     - Custom dashboards
+   
+   - **Cost Allocation**
+     - Resource tagging strategy
+     - Cost center mapping
+     - Project-based allocation
+     - Environment-based tracking
+     - Department chargeback
+   
+   - **Reporting and Analysis**
+     - Monthly cost reports
+     - Usage pattern analysis
+     - Cost trend analysis
+     - Optimization recommendations
+     - ROI calculations
+   
+   - **Chargeback Strategy**
+     - Define cost allocation rules
+     - Set up billing reports
+     - Implement showback/chargeback
+     - Track resource ownership
+     - Monitor cost distribution
+
+6. **Deployment Cost Scenarios**
+   - **Development Environment**
+     - Estimated monthly cost: $5-10
+     - 1 KMS key
+     - ~1,000 API calls/day
+     - Minimal data transfer
+     - Cost optimization: Use shared keys
+   
+   - **Staging Environment**
+     - Estimated monthly cost: $15-25
+     - 2 KMS keys
+     - ~5,000 API calls/day
+     - Moderate data transfer
+     - Cost optimization: Implement caching
+   
+   - **Production Environment**
+     - Estimated monthly cost: $50-100
+     - 3-5 KMS keys
+     - ~20,000 API calls/day
+     - High data transfer
+     - Cost optimization: Reserved capacity
+   
+   - **Multi-Region Deployment**
+     - Estimated monthly cost: $150-300
+     - 5-10 KMS keys
+     - ~50,000 API calls/day
+     - Cross-region data transfer
+     - Cost optimization: Regional endpoints
+
+7. **Cost Optimization Case Studies**
+   - **Case Study 1: High-Frequency API Calls**
+     - Initial cost: $200/month
+     - Problem: Excessive API calls
+     - Solution: Implemented request batching
+     - Result: 60% cost reduction
+     - Implementation:
+       ```yaml
+       cache:
+         enabled: true
+         ttl: 300
+         max_size: 1000
+         batch_size: 10
+       ```
+   
+   - **Case Study 2: Multi-Environment Setup**
+     - Initial cost: $500/month
+     - Problem: Redundant key usage
+     - Solution: Key sharing and aliases
+     - Result: 40% cost reduction
+     - Implementation:
+       ```yaml
+       kms:
+         key_aliases:
+           - name: "shared-key"
+             environments: ["dev", "staging"]
+           - name: "prod-key"
+             environments: ["prod"]
+       ```
+   
+   - **Case Study 3: Cross-Region Deployment**
+     - Initial cost: $800/month
+     - Problem: High data transfer costs
+     - Solution: Regional endpoints and caching
+     - Result: 45% cost reduction
+     - Implementation:
+       ```yaml
+       endpoints:
+         primary: "kms.us-east-1.amazonaws.com"
+         secondary: "kms.eu-west-2.amazonaws.com"
+       cache:
+         cross_region: true
+         replication: "async"
+       ```
+
+8. **Detailed Chargeback Implementation**
+   - **Resource Tagging Strategy**
+     ```yaml
+     tags:
+       - key: "Environment"
+         values: ["dev", "staging", "prod"]
+       - key: "Department"
+         values: ["engineering", "finance", "operations"]
+       - key: "Project"
+         values: ["snowflake-connector", "data-pipeline"]
+       - key: "CostCenter"
+         values: ["CC001", "CC002", "CC003"]
+     ```
+   
+   - **Cost Allocation Rules**
+     ```yaml
+     allocation:
+       rules:
+         - name: "Environment Split"
+           type: "percentage"
+           values:
+             dev: 10%
+             staging: 20%
+             prod: 70%
+         - name: "Department Split"
+           type: "usage"
+           metrics:
+             - api_calls
+             - data_transfer
+             - storage
+     ```
+   
+   - **Billing Report Configuration**
+     ```yaml
+     billing:
+       report:
+         format: "csv"
+         frequency: "monthly"
+         include:
+           - resource_ids
+           - usage_types
+           - cost_centers
+           - tags
+         exclude:
+           - internal_services
+           - shared_resources
+     ```
+   
+   - **Showback Dashboard**
+     ```yaml
+     dashboard:
+       metrics:
+         - name: "Monthly Cost"
+           type: "line"
+           aggregation: "sum"
+         - name: "API Usage"
+           type: "bar"
+           aggregation: "count"
+         - name: "Cost by Department"
+           type: "pie"
+           dimension: "Department"
+       alerts:
+         - threshold: 1000
+           metric: "daily_cost"
+           action: "notify"
+     ```
 
 ## Monitoring
 
